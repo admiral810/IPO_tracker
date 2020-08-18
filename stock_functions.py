@@ -58,6 +58,7 @@ def update_ipo_symbols():
 
     # add date type column to differentiate confirmed vs expected
     ipo_scoop_recent_df['date_type'] = "Confirmed"
+    ipo_scoop_recent_orig_df = ipo_scoop_recent_df
 
     # IPO Scoop Recent IPOs - reduce to primary info
     ipo_scoop_recent_df = ipo_scoop_recent_df[["Symbol", "Company", "Offer Date", "date_type"]]
@@ -152,6 +153,18 @@ def update_ipo_symbols():
     ##########################################
 
     new_ipos_df = ipo_df[~ipo_df["symbol"].isin(sql_ipo_df["symbol"])]
+    
+    # Check for updates (Robin)
+    sql_ipo_df_expected_short = sql_ipo_df_expected[["symbol", "date_type"]]
+    sql_ipo_df_expected_short.columns = ["symbol", "sql_date_type"]
+    ipo_scoop_recent_orig_df = ipo_scoop_recent_orig_df.rename(columns={"Symbol": "symbol"})
+    review_df = pd.merge(ipo_scoop_recent_orig_df, sql_ipo_df_expected_short, how="inner", on=["symbol"])
+    review_df['difference'] = np.where(review_df['date_type'] != review_df['sql_date_type'],'different','same')
+    different_ipos_df = review_df.loc[review_df['difference']=="different"]
+    different_ipos_df = different_ipos_df[['symbol','Company','Offer Date','date_type']]
+    different_ipos_df.columns = ["symbol", "company","offer_date","date_type"]
+    
 
     engine = create_engine('postgresql://postgres:postgres@localhost:5432/IPO_tracker')
     new_ipos_df.to_sql('ipo', con=engine, if_exists='append', index=False)
+    different_ipos_df.to_sql('ipo', con=engine, if_exists='append', index=False)
