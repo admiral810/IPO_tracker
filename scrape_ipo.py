@@ -13,7 +13,7 @@ from sqlalchemy import create_engine
 
 
 
-def update_ipo_symbols():
+def scrape_for_ipos():
 
     # Bring in ipo table from sql
     engine = create_engine('postgresql://postgres:postgres@localhost:5432/IPO_tracker')
@@ -24,29 +24,32 @@ def update_ipo_symbols():
     #############################
     # IPO Scoop Upcoming IPOs
     #############################
+    # IPO Scoop Upcoming IPOs
     url = 'https://www.iposcoop.com/ipo-calendar/'
     data = pd.read_html(url)
-
     ipo_scoop_upcoming_df = data[0]
 
-    # rename symbol proposed with symbol
-    ipo_scoop_upcoming_df.rename(columns={'Symbol proposed':'Symbol'}, inplace=True)
+    # exception handling if no entries are in upcoming IPO table
+    if ipo_scoop_upcoming_df["Company"][0] == "No entries were found.":
+        ipo_scoop_upcoming_df = ipo_scoop_upcoming_df.drop([0], axis=0)
+        
+    # if table has values, process updates to dataframe
+    else:
+        # rename symbol proposed with symbol
+        ipo_scoop_upcoming_df.rename(columns={'Symbol proposed':'Symbol'}, inplace=True)
+        ipo_scoop_upcoming_df.head()
 
+        # replace 'week of' text from expected to trade column if present
+        ipo_scoop_upcoming_df['Expected to Trade'] = ipo_scoop_upcoming_df['Expected to Trade'].str.replace(' Week of', '')
+        ipo_scoop_upcoming_df
 
-    # replace 'week of' text from expected to trade column if present
-    ipo_scoop_upcoming_df['Expected to Trade'] = ipo_scoop_upcoming_df['Expected to Trade'].str.replace(' Week of', '')
-    ipo_scoop_upcoming_df
+        # split expected trade date to date and day of week
+        ipo_scoop_upcoming_df[['Offer Date','Expected Trade Weekday']] = ipo_scoop_upcoming_df['Expected to Trade'].str.split(' ',expand=True)
 
-    # split expected trade date to date and day of week
-    ipo_scoop_upcoming_df[['Offer Date','Expected Trade Weekday']] = ipo_scoop_upcoming_df['Expected to Trade'].str.split(' ',expand=True)
+        # add date type column to differentiate confirmed vs expected
+        ipo_scoop_upcoming_df['date_type'] = "Expected"
+        ipo_scoop_upcoming_df['source'] = "IPO Scoop"
 
-    # add date type column to differentiate confirmed vs expected
-    ipo_scoop_upcoming_df['date_type'] = "Expected"
-
-
-    # IPO Scoop Upcoming IPOs - reduce to primary info
-    ipo_scoop_upcoming_df = ipo_scoop_upcoming_df[["Symbol", "Company", "Offer Date", "date_type"]]
-    ipo_scoop_upcoming_df = ipo_scoop_upcoming_df.rename(columns={"Symbol": "symbol", "Company": "company", "Offer Date": "offer_date"})
 
     #############################                                
     # IPO Scoop Recent IPOs
@@ -58,18 +61,17 @@ def update_ipo_symbols():
 
     # add date type column to differentiate confirmed vs expected
     ipo_scoop_recent_df['date_type'] = "Confirmed"
+    ipo_scoop_recent_df['source'] = "IPO Scoop"
 
-    # IPO Scoop Recent IPOs - reduce to primary info
-    ipo_scoop_recent_df = ipo_scoop_recent_df[["Symbol", "Company", "Offer Date", "date_type"]]
     ipo_scoop_recent_df = ipo_scoop_recent_df.rename(columns={"Symbol": "symbol", "Company": "company", "Offer Date": "offer_date"})
 
 
     #############################                                
-    # Nasdaq Priced IPOs
+    # Nasdaq Setup
     #############################
 
     current_year_month = datetime.today().strftime('%Y-%m')
-    
+   
     # scrape nasdaq https://api.nasdaq.com/api/ipo/calendar?date=2020-08
     # note, had to create headers due to time out, solution found here: https://stackoverflow.com/questions/46862719/pythons-requests-library-timing-out-but-getting-the-response-from-the-browser
     url = f'https://api.nasdaq.com/api/ipo/calendar?date={current_year_month}'
@@ -78,6 +80,11 @@ def update_ipo_symbols():
     response = requests.get(url, headers=headers)
     data = response.text
     data = json.loads(data)
+
+
+    #############################                                
+    # Nasdaq Priced IPOs
+    #############################
 
     priced_ipos = data["data"]["priced"]["rows"]
 
@@ -101,6 +108,7 @@ def update_ipo_symbols():
                     })
 
     nasdaq_priced_df["date_type"] = "Confirmed"
+    nasdaq_priced_df['source'] = "Nasdaq"
 
     #############################                                
     # Nasdaq Upcoming IPOs
@@ -128,10 +136,7 @@ def update_ipo_symbols():
                     })
 
     nasdaq_upcoming_df["date_type"] = "Expected"
-
-    # trim to most relevant columns
-    nasdaq_priced_df = nasdaq_priced_df[["symbol", "company", "offer_date", "date_type"]]
-    nasdaq_upcoming_df = nasdaq_upcoming_df[["symbol", "company", "offer_date", "date_type"]]
+    nasdaq_upcoming_df['source'] = "Nasdaq"
 
     #############################                                
     # Combine all IPOs
@@ -151,7 +156,16 @@ def update_ipo_symbols():
     # Determine New Symbols - Add to Database
     ##########################################
 
-    new_ipos_df = ipo_df[~ipo_df["symbol"].isin(sql_ipo_df["symbol"])]
+    ipo_df = pd.concat([ipo_scoop_recent_df, ipo_scoop_upcoming_df, nasdaq_priced_df, nasdaq_upcoming_df], ignore_index=True, sort=False)
+    
+    # drop unnecessary columns if they exist
+    ipo_df = ipo_df.drop(['Company','Symbol proposed','Expected to Trade','Rating Change', 'Lead Managers'], axis=1, errors='ignore')
+    ipo_df.dropna(subset=['symbol'])
 
-    engine = create_engine('postgresql://postgres:postgres@localhost:5432/IPO_tracker')
-    new_ipos_df.to_sql('ipo', con=engine, if_exists='append', index=False)
+    # convert offer date to datetime datatype
+    ipo_df['offer_date'] = pd.to_datetime(ipo_df['offer_date'], format="%m/%d/%Y")
+    ipo_df = ipo_df.sort_values(by='date_type', ascending=True) # sort by date_type to keep "confirmed" values for duplicates if results differ
+
+    print("IPOs scraped!")
+    return ipo_df
+
