@@ -36,12 +36,10 @@ def scrape_for_ipos():
     # if table has values, process updates to dataframe
     else:
         # rename symbol proposed with symbol
-        ipo_scoop_upcoming_df.rename(columns={'Symbol proposed':'Symbol'}, inplace=True)
-        ipo_scoop_upcoming_df.head()
+        ipo_scoop_upcoming_df.rename(columns={'Symbol proposed':'symbol', 'Symbol' : 'symbol'}, inplace=True)
 
         # replace 'week of' text from expected to trade column if present
         ipo_scoop_upcoming_df['Expected to Trade'] = ipo_scoop_upcoming_df['Expected to Trade'].str.replace(' Week of', '')
-        ipo_scoop_upcoming_df
 
         # split expected trade date to date and day of week
         ipo_scoop_upcoming_df[['Offer Date','Expected Trade Weekday']] = ipo_scoop_upcoming_df['Expected to Trade'].str.split(' ',expand=True)
@@ -156,6 +154,12 @@ def scrape_for_ipos():
     # Determine New Symbols - Add to Database
     ##########################################
 
+    # change column names to lowercase
+    ipo_scoop_recent_df.rename(str.lower, axis='columns', inplace=True)
+    ipo_scoop_upcoming_df.rename(str.lower, axis='columns', inplace=True)
+    nasdaq_priced_df.rename(str.lower, axis='columns', inplace=True)
+    nasdaq_upcoming_df.rename(str.lower, axis='columns', inplace=True)
+
     ipo_df = pd.concat([ipo_scoop_recent_df, ipo_scoop_upcoming_df, nasdaq_priced_df, nasdaq_upcoming_df], ignore_index=True, sort=False)
     
     # drop unnecessary columns if they exist
@@ -164,7 +168,7 @@ def scrape_for_ipos():
 
     # convert offer date to datetime datatype
     ipo_df['offer_date'] = pd.to_datetime(ipo_df['offer_date'], format="%m/%d/%Y")
-    ipo_df = ipo_df.sort_values(by='date_type', ascending=True) # sort by date_type to keep "confirmed" values for duplicates if results differ
+    ipo_df = ipo_df.sort_values(by='date_type', ascending=True).reset_index(drop=True) # sort by date_type to keep "confirmed" values for duplicates if results differ
 
     print("IPOs scraped!")
     return ipo_df
