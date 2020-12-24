@@ -1,7 +1,7 @@
+
 CREATE TABLE stocks
 (
-	id SERIAL NOT NULL PRIMARY KEY,
-	symbol VARCHAR(10) UNIQUE,
+	symbol VARCHAR(10) PRIMARY KEY,
 	company VARCHAR(255) NOT NULL,
 	exchange VARCHAR(255),
 	proposed_share_price VARCHAR(255) NOT NULL,
@@ -12,3 +12,36 @@ CREATE TABLE stocks
 );
 
 SELECT * FROM stocks;
+
+CREATE TABLE performance(
+	id SERIAL PRIMARY KEY,
+	symbol VARCHAR(10),
+	unix_time INT,
+	date DATE,
+	open DECIMAL(6,2),
+	close DECIMAL(6,2),
+	high DECIMAL(6,2),
+	low DECIMAL(6,2),
+	volume INT,
+	date_pulled DATE
+);
+
+SELECT * FROM performance;
+
+DROP TABLE company_info;
+CREATE TABLE company_info(
+	id SERIAL PRIMARY KEY,
+	symbol VARCHAR(10),
+	address VARCHAR(255),
+	city VARCHAR(255),
+	state VARCHAR(255),
+	zip_code VARCHAR(255),
+	country VARCHAR(255),
+	website VARCHAR(255),
+	industry VARCHAR(255),
+	sector VARCHAR(255),
+	business_summary VARCHAR(1000),
+	date_pulled DATE
+);
+
+SELECT * FROM company_info;
