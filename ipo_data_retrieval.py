@@ -119,5 +119,89 @@ def scrape_for_ipos(year_month):
 
 def scrape_for_performance(year_month):
 
-    # will need to build this out for ongoing
+    # mysql login info
+    sys.path.insert(0, '../../Key')
+    from mysql_secret import dbuser, dbpass, dbhost, dbname
+    engine = create_engine(f'mysql://{dbuser}:{dbpass}@{dbhost}/{dbname}?charset=utf8')
+
+    # get unix time range for web request
+    start_unixtime = 1514903400  #Jan 2, 2018
+
+    current_date = datetime.now()
+    print(current_date)
+
+    earliest_date_time = current_date.replace(hour=0, minute=0, second=0, microsecond=0)
+    print(earliest_date_time)
+
+    end_unixtime = time.mktime(earliest_date_time.timetuple())
+    end_unixtime = int(end_unixtime)
+
+    # today
     today = datetime.today().strftime("%Y-%m-%d")
+
+    # query stocks from SQL
+    connection = engine.connect()
+    ipo_stocks = pd.read_sql("SELECT symbol, deal_status FROM stocks WHERE deal_status = 'priced'", connection)
+    ipo_stocks["default_start_unixtime"] = start_unixtime
+    ipo_stocks["end_unixtime"] = end_unixtime
+
+    # get the max unix captured to avoid double capturing the same date twice (pick up where database left off)
+    stock_perf_start_unix = pd.read_sql("SELECT symbol, max(unix_time) AS max_unix_captured  FROM performance  GROUP BY symbol""", connection)
+    ipo_stocks = ipo_stocks.merge(stock_perf_start_unix, on="symbol", how="outer")
+    ipo_stocks["max_unix_captured"] = ipo_stocks["max_unix_captured"].fillna(0).astype('int64')
+    ipo_stocks["max_unix_captured"] = ipo_stocks["max_unix_captured"] + 86400  #add a day to latest date captured
+
+    ipo_stocks["start_unixtime"] = ipo_stocks[["default_start_unixtime", "max_unix_captured"]].max(axis=1).astype('int64')
+
+    # empty list of dfs
+    performance_df_list= []
+
+    # make requests for performance information for each row
+    for row in ipo_stocks.itertuples():
+
+        url = f'https://query2.finance.yahoo.com/v8/finance/chart/{row.symbol}?formatted=true&crumb=T18HKACbWPn&lang=en-US&region=US&includeAdjustedClose=true&interval=1d&period1={row.start_unixtime}&period2={row.end_unixtime}&events=div%7Csplit&corsDomain=finance.yahoo.com'
+        r = requests.get(url)
+        print(f"trying url: {url}")
+        if r.ok:
+            try: 
+                data = r.json()
+
+                # get data
+                timestamp = data["chart"]["result"][0]["timestamp"]
+                stk_open = data["chart"]["result"][0]["indicators"]["quote"][0]["open"]
+                stk_close = data["chart"]["result"][0]["indicators"]["quote"][0]["close"]
+                stk_high = data["chart"]["result"][0]["indicators"]["quote"][0]["high"]
+                stk_low = data["chart"]["result"][0]["indicators"]["quote"][0]["low"]
+                stk_vol = data["chart"]["result"][0]["indicators"]["quote"][0]["volume"]
+
+                #transform into dataframe
+                df = pd.DataFrame({"symbol" : row.symbol,
+                                "unix_time" : timestamp,
+                                "date" : [datetime.fromtimestamp(ts).strftime('%Y-%m-%d') for ts in timestamp],
+                                "open" : stk_open, 
+                                "close" : stk_close,
+                                "high" : stk_high,
+                                "low" : stk_low,
+                                "volume" : stk_vol
+                                })
+
+                df['date'] = pd.to_datetime(df['date'], format="%Y-%m-%d")
+                df['date_pulled'] = today
+
+                print(f"{row.symbol} has results")
+                performance_df_list.append(df)
+            except KeyError:
+                continue
+        
+        else:
+            print(f"{row.symbol} NO RESULTS")
+
+        time.sleep(.5)
+
+    # combine all the performance results to one dataframe
+    performance_df = pd.concat(performance_df_list)
+
+    # add performance to database
+    connection = engine.connect()
+    performance_df.to_sql('performance', con=engine, if_exists='append', index=False)
+    conncetion.close()

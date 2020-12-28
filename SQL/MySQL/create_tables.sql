@@ -1,4 +1,7 @@
-
+-- ==========================================================
+-- CREATE TABLES
+-- ==========================================================
+USE ipo_tracker;
 CREATE TABLE stocks
 (
 	symbol VARCHAR(10) PRIMARY KEY,
@@ -11,24 +14,6 @@ CREATE TABLE stocks
 	deal_status VARCHAR(10)
 );
 
-SELECT * FROM stocks;
-
-CREATE TABLE performance(
-	id SERIAL PRIMARY KEY,
-	symbol VARCHAR(10),
-	unix_time INT,
-	date DATE,
-	open DECIMAL(6,2),
-	close DECIMAL(6,2),
-	high DECIMAL(6,2),
-	low DECIMAL(6,2),
-	volume INT,
-	date_pulled DATE
-);
-
-SELECT * FROM performance;
-
-DROP TABLE company_info;
 CREATE TABLE company_info(
 	id SERIAL PRIMARY KEY,
 	symbol VARCHAR(10),
@@ -41,7 +26,22 @@ CREATE TABLE company_info(
 	industry VARCHAR(255),
 	sector VARCHAR(255),
 	business_summary VARCHAR(1000),
-	date_pulled DATE
+	date_pulled DATE,
+FOREIGN KEY (symbol) REFERENCES stocks(symbol) ON DELETE CASCADE 
 );
 
-SELECT * FROM company_info;
+CREATE TABLE performance(
+	id SERIAL PRIMARY KEY,
+	symbol VARCHAR(10),
+	unix_time INT,
+	date DATE,
+	open DECIMAL(6,2),
+	close DECIMAL(6,2),
+	high DECIMAL(6,2),
+	low DECIMAL(6,2),
+	volume INT,
+	date_pulled DATE,
+	days_trading INT,
+FOREIGN KEY (symbol) REFERENCES stocks(symbol) ON DELETE CASCADE 
+);
+

@@ -6,12 +6,16 @@ import requests
 import time
 from datetime import datetime
 import json
-
+import sys
 
 def new_ipos_to_sql(df):
 
+    # mysql login info
+    sys.path.insert(0, '../../Key')
+    from mysql_secret import dbuser, dbpass, dbhost, dbname
+    engine = create_engine(f'mysql://{dbuser}:{dbpass}@{dbhost}/{dbname}')
+    
     # Bring in ipo table
-    engine = create_engine('postgresql://postgres:postgres@localhost:5432/IPO_tracker')
     connection = engine.connect()
     sql_ipo_df = pd.read_sql("SELECT * FROM stocks", connection)
 
@@ -24,3 +28,5 @@ def new_ipos_to_sql(df):
     print(f"{len(new_ipos_df['symbol'])} were added to the database!")
 
     connection.close()
+
+
