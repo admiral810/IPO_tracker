@@ -22,7 +22,11 @@ For stock performance, company characteristics, and other metrics.
 # Database
 
 After the data is cleaned and transformed it is loaded to a MySQL database. Additional value add measures are added to the database with stored procedures and views (Ex: adding market cap classifications).
-  
+
+
+**Initial Schema Setup**  
+
+_Additional tables may be added as additional features are built out_ 
 <img src="images/database_diagram_ipos.png">
   
 
