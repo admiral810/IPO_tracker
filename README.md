@@ -28,7 +28,7 @@ After the data is cleaned and transformed it is loaded to a MySQL database. Addi
 
 <img src="images/database_diagram_ipos.png">
 
-_Additional tables may be added as additional features are built out_ 
+_*additional tables may be added as additional features are built out_ 
 
 # Analysis
 Analysis and insights are ongoing, but may include:
