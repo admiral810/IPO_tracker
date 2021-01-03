@@ -6,11 +6,13 @@ import requests
 import time
 from datetime import datetime
 import json
+import sys
+
+sys.path.insert(0, '../../Key')
+from mysql_secret import dbuser, dbpass, dbhost, dbname
 
 
 def scrape_for_ipos(year_month):
-
-
 
     #############################                                
     # Nasdaq Setup
@@ -100,13 +102,6 @@ def scrape_for_ipos(year_month):
     # combine IPO dataframes
     ipo_df = pd.concat(scraped_ipo_dfs, ignore_index=True, sort=False)
 
-    ##########################################                    
-    # Determine New Symbols - Add to Database
-    ##########################################
-
-    # combine IPO dataframes
-    ipo_df = pd.concat(scraped_ipo_dfs, ignore_index=True, sort=False)
-
     # change column datatypes
     ipo_df[['shares_offered', 'dollar_val_shares']] = ipo_df[['shares_offered', 'dollar_val_shares']].apply(pd.to_numeric)
     ipo_df['priced_date'] = pd.to_datetime(ipo_df['priced_date'], format="%m/%d/%Y")
@@ -119,10 +114,13 @@ def scrape_for_ipos(year_month):
 
 def scrape_for_performance(year_month):
 
-    # mysql login info
-    sys.path.insert(0, '../../Key')
-    from mysql_secret import dbuser, dbpass, dbhost, dbname
+    #######################################################                                
+    # GET UNIX TIMES FOR SYMBOLS (avoids duplication)
+    #######################################################
+
+    # create engine
     engine = create_engine(f'mysql://{dbuser}:{dbpass}@{dbhost}/{dbname}?charset=utf8')
+    connection = engine.connect()
 
     # get unix time range for web request
     start_unixtime = 1514903400  #Jan 2, 2018
@@ -151,7 +149,12 @@ def scrape_for_performance(year_month):
     ipo_stocks["max_unix_captured"] = ipo_stocks["max_unix_captured"].fillna(0).astype('int64')
     ipo_stocks["max_unix_captured"] = ipo_stocks["max_unix_captured"] + 86400  #add a day to latest date captured
 
+    # get the updated 'start' unix_time
     ipo_stocks["start_unixtime"] = ipo_stocks[["default_start_unixtime", "max_unix_captured"]].max(axis=1).astype('int64')
+
+    #######################################################                                
+    # GET PERFORMANCE DATA
+    #######################################################
 
     # empty list of dfs
     performance_df_list= []
@@ -201,7 +204,12 @@ def scrape_for_performance(year_month):
     # combine all the performance results to one dataframe
     performance_df = pd.concat(performance_df_list)
 
+    #######################################################                                
+    # ADD PERFORMANCE DATA TO SQL
+    #######################################################
+
     # add performance to database
-    connection = engine.connect()
     performance_df.to_sql('performance', con=engine, if_exists='append', index=False)
-    conncetion.close()
+    connection.close()
+    
+    

@@ -45,3 +45,38 @@ CREATE TABLE performance(
 FOREIGN KEY (symbol) REFERENCES stocks(symbol) ON DELETE CASCADE 
 );
 
+DROP TABLE market_cap;
+CREATE TABLE market_cap(
+	id SERIAL PRIMARY KEY,
+	symbol VARCHAR(10),
+	unix_timestamp INT,
+	date DATE,
+	market_cap BIGINT,
+	market_cap_formatted VARCHAR(25),
+	date_pulled DATE,
+FOREIGN KEY (symbol) REFERENCES stocks(symbol) ON DELETE CASCADE 
+);
+
+SELECT * FROM market_cap;
+
+
+-- ==================================================================================
+-- generated column for proposed market cap
+-- ==================================================================================
+
+ALTER TABLE stocks
+ADD COLUMN cap_classifiction VARCHAR(255) GENERATED ALWAYS AS
+	(
+		CASE
+			WHEN dollar_val_shares >= 200000000000 THEN 'Mega-cap'
+            WHEN dollar_val_shares >= 10000000000 AND dollar_val_shares < 200000000000 THEN 'Large-cap'
+            WHEN dollar_val_shares >= 2000000000 AND dollar_val_shares < 10000000000 THEN 'Mid-cap'
+            WHEN dollar_val_shares >= 300000000 AND dollar_val_shares < 2000000000 THEN 'Small-cap'
+            WHEN dollar_val_shares >= 50000000 AND dollar_val_shares <  300000000 THEN 'Micro-cap'
+            WHEN dollar_val_shares > 0 AND dollar_val_shares < 50000000 THEN 'Nano-cap'
+            ELSE null 
+		END
+	);
+    
+ALTER TABLE stocks
+RENAME COLUMN cap_classifiction TO proposed_cap_classifiction;

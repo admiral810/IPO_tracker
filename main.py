@@ -27,26 +27,36 @@ import sql_updates as su
 # ongoing data updates
 #######################################
 
-# NEW IPOS
-# current year and month for getting new IPOs
-current_year_month = datetime.today().strftime('%Y-%m')
+# UPDATE IPOS (stocks table)
+def run_ipo_daily_updates():
+    
+    #######################################
+    ###      UPDATE STOCKS TABLE        ### 
+    #######################################
+    # get new IPOs dataframe
+    current_year_month = datetime.today().strftime('%Y-%m')
 
-# get new IPOs dataframe
-ipo_df = idr.scrape_for_ipos(current_year_month)
+    # get IPO data from nasdaq
+    ipo_df = idr.scrape_for_ipos(current_year_month)
 
-# add new IPO symbols to postgres
-su.new_ipos_to_sql(ipo_df)
+    # add new IPO symbols to database
+    su.new_ipos_to_sql(ipo_df)
+    
+    # update pending ipos with 'expected' status
+    su.update_pending_ipos(ipo_df)
+
+    #######################################
+    ###   UPDATE PERFORMANCE TABLE      ### 
+    #######################################
+
+    # get performance data
+    performance_df = idr.scrape_for_performance()
+
+    # add performance data to database
+    su.performance_data_to_sql(performance_df)
 
 
-# STOCK PERFORMANCE DATA
-# get unix time range for web request
-start_unixtime = 1514903400  #Jan 2, 2018
+def run_ipo_weekly_updates():
+    """Update the company characteristics and market cap tables"""
 
-current_date = datetime.now()
-earliest_date_time = current_date.replace(hour=0, minute=0, second=0, microsecond=0)
-end_unixtime = time.mktime(earliest_date_time.timetuple())
-end_unixtime = int(end_unixtime)
-
-# for date pulled
-today = datetime.today().strftime("%Y-%m-%d")
 
