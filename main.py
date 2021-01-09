@@ -28,8 +28,10 @@ import sql_updates as su
 #######################################
 
 # UPDATE IPOS (stocks table)
-def run_ipo_daily_updates():
-    
+def run_ipo_stocks_updates():
+    """
+    Gets the upcoming IPO stocks and updates the performance table.
+    """
     #######################################
     ###      UPDATE STOCKS TABLE        ### 
     #######################################
@@ -56,7 +58,11 @@ def run_ipo_daily_updates():
     su.performance_data_to_sql(performance_df)
 
 
-def run_ipo_weekly_updates():
+def run_ipo_characterstics_updates():
     """Update the company characteristics and market cap tables"""
+    Pass
+
+
+run_ipo_stocks_updates()
 
 

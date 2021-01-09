@@ -112,7 +112,7 @@ def scrape_for_ipos(year_month):
 
 
 
-def scrape_for_performance(year_month):
+def scrape_for_performance():
 
     #######################################################                                
     # GET UNIX TIMES FOR SYMBOLS (avoids duplication)
@@ -204,12 +204,6 @@ def scrape_for_performance(year_month):
     # combine all the performance results to one dataframe
     performance_df = pd.concat(performance_df_list)
 
-    #######################################################                                
-    # ADD PERFORMANCE DATA TO SQL
-    #######################################################
+    return performance_df
 
-    # add performance to database
-    performance_df.to_sql('performance', con=engine, if_exists='append', index=False)
-    connection.close()
-    
     
