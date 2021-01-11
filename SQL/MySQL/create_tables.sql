@@ -45,7 +45,6 @@ CREATE TABLE performance(
 FOREIGN KEY (symbol) REFERENCES stocks(symbol) ON DELETE CASCADE 
 );
 
-DROP TABLE market_cap;
 CREATE TABLE market_cap(
 	id SERIAL PRIMARY KEY,
 	symbol VARCHAR(10),
@@ -57,7 +56,28 @@ CREATE TABLE market_cap(
 FOREIGN KEY (symbol) REFERENCES stocks(symbol) ON DELETE CASCADE 
 );
 
-SELECT * FROM market_cap;
+
+CREATE TABLE industry_performance(
+	id SERIAL PRIMARY KEY,
+	symbol VARCHAR(10),
+    name VARCHAR(255) GENERATED ALWAYS AS
+		(
+			CASE
+				WHEN symbol = 'DJI' THEN 'Dow Jones Industrial Avg'
+				WHEN symbol = 'IXIC' THEN 'NASDAQ Composite'
+				WHEN symbol = 'GSPC' THEN 'S&P 500'
+				ELSE null 
+			END
+		),
+	unix_time INT,
+	date DATE,
+	open DECIMAL(16,2),
+	close DECIMAL(16,2),
+	high DECIMAL(16,2),
+	low DECIMAL(16,2),
+	volume BIGINT,
+	date_pulled DATE
+);
 
 
 -- ==================================================================================
