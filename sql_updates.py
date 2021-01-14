@@ -88,9 +88,57 @@ def update_pending_ipos(df):
 
 def performance_data_to_sql(df):
 
-    engine = create_engine(f'mysql://{dbuser}:{dbpass}@{dbhost}/{dbname}')
-    connection = engine.connect()
+    if df is None:
+        pass
+    else:
+        engine = create_engine(f'mysql://{dbuser}:{dbpass}@{dbhost}/{dbname}')
+        connection = engine.connect()
+        
+        # add performance to database
+        df.to_sql('performance', con=engine, if_exists='append', index=False)
+        connection.close()
+
+
+def ind_performance_data_to_sql(df):
+
+    if df is None:
+        pass
+    else:
+        engine = create_engine(f'mysql://{dbuser}:{dbpass}@{dbhost}/{dbname}')
+        connection = engine.connect()
+        
+        # add industry performance to database
+        connection = engine.connect()
+        df.to_sql('industry_performance', con=engine, if_exists='append', index=False)
+        connection.close()
+
+
+def comp_char_data_to_sql(df):
+
+    if len(df['symbol']) > 0:
+        engine = create_engine(f'mysql://{dbuser}:{dbpass}@{dbhost}/{dbname}')
+        connection = engine.connect()
+        
+        # add industry performance to database
+        connection = engine.connect()
+        df.to_sql('company_info', con=engine, if_exists='append', index=False)
+        connection.close()
+        print(f"{len(df['symbol'])} new company characteristics rows added")
+    else:
+        print("no new company characteristics")
+
+
+def market_cap_data_to_sql(df):
+
+    if len(df['symbol']) > 0:
+        engine = create_engine(f'mysql://{dbuser}:{dbpass}@{dbhost}/{dbname}')
+        connection = engine.connect()
+        
+        # add industry performance to database
+        connection = engine.connect()
+        df.to_sql('market_cap', con=engine, if_exists='append', index=False)
+        connection.close()
+        print(f"{len(df['symbol'])} new market cap rows added")
+    else:
+        print("no new market cap data")
     
-    # add performance to database
-    df.to_sql('performance', con=engine, if_exists='append', index=False)
-    connection.close()

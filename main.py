@@ -57,10 +57,36 @@ def run_ipo_stocks_updates():
     # add performance data to database
     su.performance_data_to_sql(performance_df)
 
+    #######################################
+    #  UPDATE INDUSTRY PERFORMANCE TABLE  #
+    #######################################
 
-def run_ipo_characterstics_updates():
-    """Update the company characteristics and market cap tables"""
-    Pass
+    # get industry performance data
+    ind_performance_df = idr.scrape_for_ind_performance()
+
+    # add performance data to database
+    su.ind_performance_data_to_sql(ind_performance_df)
+
+    #######################################
+    ###  UPDATE CHARACTERISTICS TABLE   ### 
+    #######################################
+
+    # get charactersitics data
+    comp_char_df = idr.scrape_for_comp_char()
+
+    # add company characteristics data to database if there is at least one symbol to update
+    su.comp_char_data_to_sql(comp_char_df)
+
+
+    #######################################
+    ###     UPDATE MARKET CAP TABLE     ###
+    #######################################
+
+    # get market cap data
+    market_cap_df = idr.scrape_for_market_cap()
+
+    # add market cap data to database if there is at least one symbol to update
+    su.market_cap_data_to_sql(market_cap_df)
 
 
 run_ipo_stocks_updates()
