@@ -28,7 +28,8 @@ BEGIN
 		FROM performance 
 		GROUP BY symbol
 		) sub
-	SET days_trading = p.date - sub.first_trade_day;
+        ON sub.symbol = p.symbol 
+	SET days_trading = DATEDIFF(p.date, sub.first_trade_day);
     
     SET SQL_SAFE_UPDATES = 1;
 END$$
@@ -38,7 +39,7 @@ DELIMITER ;
 
 
 -- ==========================================================================
--- SP for prices after n days on market
+-- SP for market cap size
 -- ==========================================================================
 
 USE ipo_tracker;
