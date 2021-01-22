@@ -393,6 +393,103 @@ def scrape_for_comp_char():
     return comp_info_df
 
 
+def get_update_industry_sector():
+    # query characteristics with NULL or blank values for industry or sector
+    engine = create_engine(f'mysql://{dbuser}:{dbpass}@{dbhost}/{dbname}?charset=utf8')
+    connection = engine.connect()
+    ci_limited_df = pd.read_sql("""
+                            SELECT *
+                            FROM company_info
+                            WHERE industry IS NULL 
+                                OR industry = ''
+                                OR sector IS NULL
+                                OR sector = ''""", connection)
+    connection.close()
+
+    # create engine
+    engine = create_engine(f'mysql://{dbuser}:{dbpass}@{dbhost}/{dbname}?charset=utf8')
+
+    # Declare a Base using `automap_base()`
+    Base = automap_base()
+
+    # Use the Base class to reflect the database tables
+    Base.prepare(engine, reflect=True)
+
+    # Assign the company_info class to a variable called `Company_Info`
+    Comp_Info = Base.classes.company_info
+
+    # Create a session
+    session = Session(engine)
+
+    #get characteristics dataframe
+    today = datetime.today().strftime("%Y-%m-%d")
+
+    # empty list for df
+    symbol = []
+    address = []
+    city = []
+    state = []
+    zip_code = []
+    country = []
+    website = []
+    industry = []
+    sector = []
+    business_summary = []
+
+    # make requests for characteristic information for each row
+    for row in ci_limited_df.itertuples():
+
+        url = f'https://query1.finance.yahoo.com/v10/finance/quoteSummary/{row.symbol}?modules=assetProfile%2CearningsHistory'
+        r = requests.get(url)
+        print(f"trying url: {url}")
+        if r.ok:
+            try: 
+                data = r.json()
+                char_dict = data["quoteSummary"]["result"][0]["assetProfile"]
+
+                symbol.append(row.symbol)
+                address.append(char_dict.get("address1", ""))
+                city.append(char_dict.get("city", ""))
+                state.append(char_dict.get("state", ""))  
+                zip_code.append(char_dict.get("zip", ""))  
+                country.append(char_dict.get("country", ""))  
+                website.append(char_dict.get("website", ""))
+                industry.append(char_dict.get("industry", ""))  
+                sector.append(char_dict.get("sector", ""))  
+                
+                # shorten the character length of the full business summary
+                bus_summary = char_dict.get("longBusinessSummary", "")
+                if len(bus_summary) > 252:
+                    bus_summary = bus_summary[:995] + '...'
+                business_summary.append(bus_summary)
+                    
+
+            except KeyError:
+                continue
+        
+        else:
+            print(f"{row.symbol} NO RESULTS")
+
+        time.sleep(.25)
+
+    #transform into dataframe
+    comp_info_df = pd.DataFrame({"symbol": symbol,
+                    "address": address,
+                    "city": city,
+                    "state": state,
+                    "zip_code": zip_code,
+                    "country": country,
+                    "website": website,
+                    "industry": industry,
+                    "sector": sector,
+                    "business_summary": business_summary})
+    comp_info_df['date_pulled'] = today
+
+    # get dataframe for company info that has industry or sector and previously didn't
+    df = comp_info_df.loc[(comp_info_df['industry'] != '')  | (comp_info_df['sector'] != '')]
+    return df
+
+
 def fn_get_fin_metric_index(df, metric):
     """returns the index for a given metric is in the list of metrics on yahoo (cannot use a key as it is not a dictionary).
     For example, the metric parameteter may be 'trailingMarketCap'. Other options include:

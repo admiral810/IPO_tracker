@@ -128,6 +128,33 @@ def comp_char_data_to_sql(df):
         print("no new company characteristics")
 
 
+def update_industry_sector_to_sql(df):
+
+    if len(df['symbol']) > 0:
+
+        for row in df.itertuples():
+
+            # Get the record we want to change
+            stock = session.query(Comp_Info).filter(Comp_Info.symbol==row.symbol).first()
+
+            # Change the record
+            stock.address = df.loc[df["symbol"] == row.symbol, 'address'].iloc[0]
+            stock.city = df.loc[df["symbol"] == row.symbol, 'city'].iloc[0]
+            stock.state = df.loc[df["symbol"] == row.symbol, 'state'].iloc[0]
+            stock.zip_code = df.loc[df["symbol"] == row.symbol, 'zip_code'].iloc[0]
+            stock.country = df.loc[df["symbol"] == row.symbol, 'country'].iloc[0]
+            stock.industry = df.loc[df["symbol"] == row.symbol, 'industry'].iloc[0]
+            stock.sector = df.loc[df["symbol"] == row.symbol, 'sector'].iloc[0]
+            stock.business_summary = df.loc[df["symbol"] == row.symbol, 'business_summary'].iloc[0]
+            stock.date_pulled = df.loc[df["symbol"] == row.symbol, 'date_pulled'].iloc[0]
+
+        # Update the database
+        session.commit()
+
+    else:
+        print("no company characteristics to update")
+
+
 def market_cap_data_to_sql(df):
 
     if len(df['symbol']) > 0:

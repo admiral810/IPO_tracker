@@ -77,6 +77,12 @@ def run_ipo_stocks_updates():
     # add company characteristics data to database if there is at least one symbol to update
     su.comp_char_data_to_sql(comp_char_df)
 
+    # get charactistics data for companies missing industry or sector
+    comp_char_update_df = idr.get_update_industry_sector()
+
+    # update database for companies missing industry or sector that now have one
+    su.update_industry_sector_to_sql(comp_char_update_df)
+
 
     #######################################
     ###     UPDATE MARKET CAP TABLE     ###
