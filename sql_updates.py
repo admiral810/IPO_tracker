@@ -132,6 +132,21 @@ def update_industry_sector_to_sql(df):
 
     if len(df['symbol']) > 0:
 
+        # create engine
+        engine = create_engine(f'mysql://{dbuser}:{dbpass}@{dbhost}/{dbname}?charset=utf8')
+
+        # Declare a Base using `automap_base()`
+        Base = automap_base()
+
+        # Use the Base class to reflect the database tables
+        Base.prepare(engine, reflect=True)
+
+        # Assign the company_info class to a variable called `Company_Info`
+        Comp_Info = Base.classes.company_info
+
+        # Create a session
+        session = Session(engine)
+
         for row in df.itertuples():
 
             # Get the record we want to change

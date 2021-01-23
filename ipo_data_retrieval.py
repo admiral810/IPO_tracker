@@ -2,6 +2,9 @@
 import pandas as pd 
 import numpy as np
 from sqlalchemy import create_engine
+from sqlalchemy.ext.automap import automap_base
+from sqlalchemy.orm import Session
+from sqlalchemy import create_engine
 import requests
 import time
 from datetime import datetime
@@ -128,7 +131,7 @@ def scrape_for_performance():
     current_date = datetime.now()
     print(current_date)
 
-    earliest_date_time = current_date.replace(hour=0, minute=0, second=0, microsecond=0)
+    earliest_date_time = current_date.replace(hour=16, minute=30, second=0, microsecond=0)
     print(earliest_date_time)
 
     end_unixtime = time.mktime(earliest_date_time.timetuple())
@@ -139,7 +142,7 @@ def scrape_for_performance():
 
     # query stocks from SQL
     connection = engine.connect()
-    ipo_stocks = pd.read_sql("SELECT symbol, deal_status FROM stocks WHERE deal_status = 'priced'", connection)
+    ipo_stocks = pd.read_sql(f"SELECT symbol, deal_status FROM stocks WHERE deal_status = 'priced' OR priced_date = '{today}'", connection)
     ipo_stocks["default_start_unixtime"] = start_unixtime
     ipo_stocks["end_unixtime"] = end_unixtime
 
@@ -204,6 +207,13 @@ def scrape_for_performance():
     # combine all the performance results to one dataframe if there are dataframes with data else return None
     if len(performance_df_list) > 0:
         performance_df = pd.concat(performance_df_list)
+
+        # first cleaning step (commented out for now):  remove unix time not divisible by 100 as all desired data appears to have unix divisable by 100
+        # performance_df = performance_df.loc[performance_df["unix_time"] % 100 == 0]
+
+        # second clearning step:  remove remaining DUPES
+        performance_df = performance_df.drop_duplicates(subset=['symbol', 'date'], keep='first')
+
         return performance_df
 
     else: 
@@ -227,7 +237,7 @@ def scrape_for_ind_performance():
     current_date = datetime.now()
     print(current_date)
 
-    earliest_date_time = current_date.replace(hour=0, minute=0, second=0, microsecond=0)
+    earliest_date_time = current_date.replace(hour=16, minute=30, second=0, microsecond=0)
     print(earliest_date_time)
 
     end_unixtime = time.mktime(earliest_date_time.timetuple())
@@ -305,6 +315,13 @@ def scrape_for_ind_performance():
     # combine all the performance results to one dataframe if there are dataframes with data else return None
     if len(performance_df_list) > 0:
         ind_performance_df = pd.concat(performance_df_list)
+
+        # first cleaning step (commented out for now):  remove unix time not divisible by 100 as all desired data appears to have unix divisable by 100
+        # ind_performance_df = ind_performance_df.loc[ind_performance_df["unix_time"] % 100 == 0]
+
+        # second clearning step:  remove remaining DUPES
+        ind_performance_df = ind_performance_df.drop_duplicates(subset=['symbol', 'date'], keep='first')
+
         return ind_performance_df
 
     else: 
@@ -405,21 +422,6 @@ def get_update_industry_sector():
                                 OR sector IS NULL
                                 OR sector = ''""", connection)
     connection.close()
-
-    # create engine
-    engine = create_engine(f'mysql://{dbuser}:{dbpass}@{dbhost}/{dbname}?charset=utf8')
-
-    # Declare a Base using `automap_base()`
-    Base = automap_base()
-
-    # Use the Base class to reflect the database tables
-    Base.prepare(engine, reflect=True)
-
-    # Assign the company_info class to a variable called `Company_Info`
-    Comp_Info = Base.classes.company_info
-
-    # Create a session
-    session = Session(engine)
 
     #get characteristics dataframe
     today = datetime.today().strftime("%Y-%m-%d")
