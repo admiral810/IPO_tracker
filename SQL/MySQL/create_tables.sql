@@ -100,3 +100,13 @@ ADD COLUMN cap_classifiction VARCHAR(255) GENERATED ALWAYS AS
     
 ALTER TABLE stocks
 RENAME COLUMN cap_classifiction TO proposed_cap_classifiction;
+
+-- ==================================================================================
+-- generated column for dupe records in performance
+-- ==================================================================================
+
+ALTER TABLE performance
+ADD COLUMN symbol_date_records INT ;
+
+ALTER TABLE industry_performance
+ADD COLUMN symbol_date_records INT ;
