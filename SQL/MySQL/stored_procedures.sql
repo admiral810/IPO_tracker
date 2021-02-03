@@ -66,3 +66,31 @@ BEGIN
 END$$
 
 DELIMITER ; 
+
+
+-- ==========================================================================
+-- add duplicate check for performance
+-- ==========================================================================
+
+USE ipo_tracker;
+
+DELIMITER $$
+CREATE PROCEDURE sp_check_performance_dupes()
+
+BEGIN
+	SET SQL_SAFE_UPDATES = 0;
+	-- update the days trading to 0 for the initial date
+	UPDATE performance p
+	INNER JOIN
+		(
+		SELECT symbol, date, count(*) as records
+		FROM performance
+		GROUP BY symbol, date
+		) sub
+		ON sub.symbol = p.symbol AND sub.date = p.date
+    SET p.symbol_date_records = records;	
+    
+    SET SQL_SAFE_UPDATES = 1;
+END$$
+
+DELIMITER ; 

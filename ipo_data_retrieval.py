@@ -111,6 +111,10 @@ def scrape_for_ipos(year_month):
     ipo_df = ipo_df.sort_values(by='deal_status', ascending=False).reset_index(drop=True)
     ipo_df = ipo_df.drop_duplicates(subset="symbol", keep="first")
     ipo_df = ipo_df.dropna()
+
+    # update symbols with apostrophe U issue (Ex: "NBA'U" as a symbol), they come in this format sometimes in Nasdaq for SPACs and 
+    # in order to pull correctly from yahoo need the apostrophe U removed
+    ipo_df["symbol"] = ipo_df["symbol"].str.replace("'U","")
     return ipo_df
 
 
@@ -131,7 +135,7 @@ def scrape_for_performance():
     current_date = datetime.now()
     print(current_date)
 
-    earliest_date_time = current_date.replace(hour=16, minute=30, second=0, microsecond=0)
+    earliest_date_time = current_date.replace(hour=17, minute=00, second=0, microsecond=0)
     print(earliest_date_time)
 
     end_unixtime = time.mktime(earliest_date_time.timetuple())
@@ -142,7 +146,7 @@ def scrape_for_performance():
 
     # query stocks from SQL
     connection = engine.connect()
-    ipo_stocks = pd.read_sql(f"SELECT symbol, deal_status FROM stocks WHERE deal_status = 'priced' OR priced_date = '{today}'", connection)
+    ipo_stocks = pd.read_sql(f"SELECT symbol, deal_status FROM stocks ", connection)
     ipo_stocks["default_start_unixtime"] = start_unixtime
     ipo_stocks["end_unixtime"] = end_unixtime
 
@@ -237,7 +241,7 @@ def scrape_for_ind_performance():
     current_date = datetime.now()
     print(current_date)
 
-    earliest_date_time = current_date.replace(hour=16, minute=30, second=0, microsecond=0)
+    earliest_date_time = current_date.replace(hour=17, minute=0, second=0, microsecond=0)
     print(earliest_date_time)
 
     end_unixtime = time.mktime(earliest_date_time.timetuple())
