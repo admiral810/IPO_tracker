@@ -166,7 +166,7 @@ SELECT * FROM vw_365_days_trading;
 
 USE ipo_tracker;
 ALTER VIEW vw_stocks_performance AS
-SELECT S.symbol, S.company, S.proposed_share_price, S.shares_offered, S.dollar_val_shares, 
+SELECT S.symbol, S.company, S.exchange, S.proposed_share_price, S.shares_offered, S.dollar_val_shares, 
 	CI.city, CI.state, CI.country, CI.zip_code, CI.industry, CI.sector,
     RMC.date date_of_market_cap, RMC.market_cap, RMC.market_cap_formatted, RMC.market_cap_classification,
 	F.first_trade_date, YEAR(F.first_trade_date) AS first_trade_year, MONTH(F.first_trade_date) AS first_trade_month, DATE_FORMAT(F.first_trade_date,'%Y-%m') AS first_trade_year_month,
@@ -262,7 +262,26 @@ FROM performance P
 -- ==================================================================================
 -- update all stock prices in performance table to NULL where symbol has issues
 -- ==================================================================================
+
+SET SQL_SAFE_UPDATES = 0;
 UPDATE performance
 SET open = NULL, close = NULL, high = NULL, low = NULL 
 WHERE symbol IN
-	(SELECT symbol FROM stock_issues GROUP BY symbol)
+	(SELECT symbol FROM stock_issues GROUP BY symbol);
+SET SQL_SAFE_UPDATES = 1;
+
+
+-- ==================================================================================
+-- duplicate performance rows
+-- ==================================================================================
+SELECT p.*
+FROM performance p
+INNER JOIN 
+	(
+	SELECT symbol, date, count(*) as records
+	FROM performance
+	GROUP BY symbol, date
+	HAVING records > 1
+	) as dupes
+    ON p.symbol = dupes.symbol AND p.date = dupes.date
+ORDER BY p.symbol, p.date

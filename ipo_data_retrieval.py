@@ -135,7 +135,13 @@ def scrape_for_performance():
     current_date = datetime.now()
     print(current_date)
 
-    earliest_date_time = current_date.replace(hour=17, minute=00, second=0, microsecond=0)
+    # if its past 5p CST and markets are closed get unix to pull todays info, else pull market data from yesterday
+    current_time = current_date.time()
+
+    if current_time.hour > 16:
+        earliest_date_time = current_date.replace(hour=17, minute=0, second=0, microsecond=0)
+    else:
+        earliest_date_time = current_date.replace(hour=0, minute=0, second=0, microsecond=0)
     print(earliest_date_time)
 
     end_unixtime = time.mktime(earliest_date_time.timetuple())
@@ -241,7 +247,13 @@ def scrape_for_ind_performance():
     current_date = datetime.now()
     print(current_date)
 
-    earliest_date_time = current_date.replace(hour=17, minute=0, second=0, microsecond=0)
+    # if its past 5p CST and markets are closed get unix to pull todays info, else pull market data from yesterday
+    current_time = current_date.time()
+
+    if current_time.hour > 16:
+        earliest_date_time = current_date.replace(hour=17, minute=0, second=0, microsecond=0)
+    else:
+        earliest_date_time = current_date.replace(hour=0, minute=0, second=0, microsecond=0)
     print(earliest_date_time)
 
     end_unixtime = time.mktime(earliest_date_time.timetuple())
@@ -523,7 +535,13 @@ def scrape_for_market_cap():
     current_date = datetime.now()
     print(current_date)
 
-    earliest_date_time = current_date.replace(hour=0, minute=0, second=0, microsecond=0)
+    # if its past 5p CST and markets are closed get unix to pull todays info, else pull market data from yesterday
+    current_time = current_date.time()
+
+    if current_time.hour > 16:
+        earliest_date_time = current_date.replace(hour=17, minute=0, second=0, microsecond=0)
+    else:
+        earliest_date_time = current_date.replace(hour=0, minute=0, second=0, microsecond=0)
     print(earliest_date_time)
 
     end_unixtime = time.mktime(earliest_date_time.timetuple())
