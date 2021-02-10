@@ -83,7 +83,7 @@ random_end_of_desc = [
     "enough story time on them for now",
     "ugh who cares", 
     "Robot needs a rest that's enough info for now",
-    "as there's a drive into deep left field by Castellanos and that'll be a home run. And so that'll make it a 4-0 ballgame."
+    "as there's a drive into deep left field by Castellanos and that'll be a home run, and so that'll make it a 4-0 ballgame"
 ]
 
 # get todays date
@@ -117,6 +117,9 @@ df = df.loc[~(df["company"].str.contains("Acquisition", regex=False))]  #any com
 # keep only ones that have region and industry
 df = df.dropna(subset=['region', 'industry'])
 
+# add market cap
+df["market_cap"] = (df['dollar_val_shares'].astype(float)/1000000).round(1).astype(str) + 'M'
+
 row_count = len(df.index)
 
 if row_count > 0:
@@ -130,7 +133,8 @@ if row_count > 0:
         business_summary.replace('\\n', '\n')
         
         # get tweet text
-        tweet_text = f"{company} ${symbol} should trade today, a {industry} company out of {region} ... {random.choice(random_goes_live_today)}"
+        tweet_text = f"{company} ${symbol} should trade today, a {industry} company out of {region} ... {random.choice(random_goes_live_today)} \n\nPrice Range: ${row.proposed_share_price} \nMarket Cap: ${row.market_cap}"
+        tweet_text.replace('\\n', '\n')
         
         # text for image of company description
         description = business_summary + " " + random.choice(random_end_of_desc)
