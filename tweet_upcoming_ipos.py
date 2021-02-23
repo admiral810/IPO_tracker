@@ -102,6 +102,7 @@ tw_ipos_df = pd.read_sql(f"""
     WHERE priced_date BETWEEN '{today}' and '{week_from_today}'
     """, connection)
 
+
 # convert to datetime
 tw_ipos_df['priced_date'] =  pd.to_datetime(tw_ipos_df['priced_date'])
 
@@ -120,54 +121,59 @@ tw_ipos_df = tw_ipos_df.sort_values("priced_date")
 # remove inc. and corp. and stuff like that from company name
 tw_ipos_df = remove_comp_suffix(tw_ipos_df)
 
-###########################
-# GET TWEET TEXT 
-###########################
-tweet_text = f"Upcoming IPOs {random.choice(random_upcoming_ipo)}\n"
+# if there are no rows stop the function
+if (len(tw_ipos_df.index) == 0):
+    print("no upcoming IPOs")
 
-for row in tw_ipos_df.itertuples():
-    
-    # remove .00 from proposed share prices to reduce unecesary characters
-    psp = row.proposed_share_price.replace(".00", "")
-    
-    # if going to exceed the length of twitter characters allowed then break out of loop
-    if len(tweet_text) > 245:
-        break
-    else:
-        tweet_text += "\n"
-        row_text = f"{row.price_month_day}: ${row.symbol} at ${psp}" 
-        tweet_text += row_text
-print(tweet_text)
+else:
+    ###########################
+    # GET TWEET TEXT 
+    ###########################
+    tweet_text = f"Upcoming IPOs {random.choice(random_upcoming_ipo)}\n"
 
-###########################
-# GET TWEET IMAGE 
-###########################
+    for row in tw_ipos_df.itertuples():
+        
+        # remove .00 from proposed share prices to reduce unecesary characters
+        psp = row.proposed_share_price.replace(".00", "")
+        
+        # if going to exceed the length of twitter characters allowed then break out of loop
+        if len(tweet_text) > 245:
+            break
+        else:
+            tweet_text += "\n"
+            row_text = f"{row.price_month_day}: ${row.symbol} at ${psp}" 
+            tweet_text += row_text
 
-# table for tweet image
-tw_ipos_img_df = tw_ipos_df[['price_month_day', 'symbol', 'company', 'proposed_share_price', 'market_cap']]
-tw_ipos_img_df['proposed_share_price'] = "$" + tw_ipos_img_df['proposed_share_price']
-tw_ipos_img_df = tw_ipos_img_df.rename(columns={'price_month_day': 'Date',
-                                                'symbol': 'Symbol',
-                                                'company': 'Company',
-                                                'proposed_share_price': 'Proposed Price',
-                                                'market_cap': 'Market Cap'
-                                               })
 
-# get tweet image
-colorscale = [[0, '#118AB2'],[.5, '#FFFFFF'],[1, '#F2F2F2']]
-fig =  ff.create_table(tw_ipos_img_df, colorscale=colorscale, height_constant=20)
+    ###########################
+    # GET TWEET IMAGE 
+    ###########################
 
-fig.write_image("weekly_ipos.png", scale = 1)
+    # table for tweet image
+    tw_ipos_img_df = tw_ipos_df[['price_month_day', 'symbol', 'company', 'proposed_share_price', 'market_cap']]
+    tw_ipos_img_df['proposed_share_price'] = "$" + tw_ipos_img_df['proposed_share_price']
+    tw_ipos_img_df = tw_ipos_img_df.rename(columns={'price_month_day': 'Date',
+                                                    'symbol': 'Symbol',
+                                                    'company': 'Company',
+                                                    'proposed_share_price': 'Proposed Price',
+                                                    'market_cap': 'Market Cap'
+                                                })
 
-###########################
-# SEND TWEET 
-###########################
+    # get tweet image
+    colorscale = [[0, '#118AB2'],[.5, '#FFFFFF'],[1, '#F2F2F2']]
+    fig =  ff.create_table(tw_ipos_img_df, colorscale=colorscale, height_constant=20)
 
-# the name of the media file 
-filename = "weekly_ipos.png"
+    fig.write_image("weekly_ipos.png", scale = 1)
 
-# upload the file 
-media = api.media_upload(filename) 
+    ###########################
+    # SEND TWEET 
+    ###########################
 
-# Send out the tweet
-api.update_with_media(filename="weekly_ipos.png", media_id=media.media_id, status=tweet_text)
+    # the name of the media file 
+    filename = "weekly_ipos.png"
+
+    # upload the file 
+    media = api.media_upload(filename) 
+
+    # Send out the tweet
+    api.update_with_media(filename="weekly_ipos.png", media_id=media.media_id, status=tweet_text)
