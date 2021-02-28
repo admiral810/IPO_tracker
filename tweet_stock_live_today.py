@@ -131,6 +131,9 @@ if row_count > 0:
         region = row.region
         business_summary = "\n\n\n" + row.business_summary
         business_summary.replace('\\n', '\n')
+
+        # shorten text some
+        business_summary = business_summary[:455] + "... "
         
         # get tweet text
         tweet_text = f"{company} ${symbol} should trade today, a {industry} company out of {region} ... {random.choice(random_goes_live_today)} \n\nPrice Range: ${row.proposed_share_price} \nMarket Cap: ${row.market_cap}"
