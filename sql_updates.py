@@ -190,7 +190,7 @@ def update_sql_log(update_stmt):
     """
     now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
-    df = pd.DataFrame({"script": ["main webscrape"],
+    df = pd.DataFrame({"script": [update_stmt],
                   "date_time": [now]})
     
     # load data
