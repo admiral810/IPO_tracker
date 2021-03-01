@@ -183,4 +183,16 @@ def market_cap_data_to_sql(df):
         print(f"{len(df['symbol'])} new market cap rows added")
     else:
         print("no new market cap data")
+
+def update_sql_log(update_stmt):
+    """
+    updates the scripts_log table with the argument passed to track what scripts ran
+    """
+    now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+    df = pd.DataFrame({"script": ["main webscrape"],
+                  "date_time": [now]})
     
+    # load data
+    engine = create_engine(f'mysql://{dbuser}:{dbpass}@{dbhost}/{dbname}?charset=utf8')
+    df.to_sql('scripts_log', con=engine, if_exists='append', index=False)

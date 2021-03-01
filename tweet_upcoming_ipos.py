@@ -29,6 +29,10 @@ sys.path.insert(0, '../../Key')
 from mysql_secret import dbuser, dbpass, dbhost, dbname
 engine = create_engine(f'mysql://{dbuser}:{dbpass}@{dbhost}/{dbname}?charset=utf8')
 
+# import local modules
+import ipo_data_retrieval as idr
+import sql_updates as su
+
 # Establish Twitter connection
 import tweepy
 
@@ -177,3 +181,6 @@ else:
 
     # Send out the tweet
     api.update_with_media(filename="weekly_ipos.png", media_id=media.media_id, status=tweet_text)
+
+
+su.update_sql_log("upcoming IPOs schedule")

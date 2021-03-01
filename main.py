@@ -94,6 +94,12 @@ def run_ipo_stocks_updates():
     # add market cap data to database if there is at least one symbol to update
     su.market_cap_data_to_sql(market_cap_df)
 
+    #######################################
+    ###        UPDATE SQL LOG           ###
+    #######################################
+    
+    su.update_sql_log("main webscrape")
+
 
 run_ipo_stocks_updates()
 

@@ -218,11 +218,17 @@ def scrape_for_performance():
     if len(performance_df_list) > 0:
         performance_df = pd.concat(performance_df_list)
 
-        # first cleaning step (commented out for now):  remove unix time not divisible by 100 as all desired data appears to have unix divisable by 100
-        # performance_df = performance_df.loc[performance_df["unix_time"] % 100 == 0]
-
-        # second clearning step:  remove remaining DUPES
+        # clearning step:  remove remaining DUPES
         performance_df = performance_df.drop_duplicates(subset=['symbol', 'date'], keep='first')
+
+        # avoid adding a duplicate symbol and date combo
+        stock_perf_db = pd.read_sql("SELECT symbol, date FROM performance""", connection)
+        stock_perf_db["symbol_date"] = stock_perf_db["symbol"] + "_" + stock_perf_db["date"].astype(str)
+        
+        # remove any symbols date duplicate combos
+        performance_df["symbol_date"] = performance_df["symbol"] + "_" + performance_df["date"].astype(str)
+        performance_df = performance_df[~performance_df["symbol_date"].isin(stock_perf_db[["symbol_date"]])]
+        performance_df.drop(columns="symbol_date", inplace=True)
 
         return performance_df
 

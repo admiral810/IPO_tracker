@@ -25,6 +25,10 @@ sys.path.insert(0, '../../Key')
 from mysql_secret import dbuser, dbpass, dbhost, dbname
 engine = create_engine(f'mysql://{dbuser}:{dbpass}@{dbhost}/{dbname}?charset=utf8')
 
+# import local modules
+import ipo_data_retrieval as idr
+import sql_updates as su
+
 # Establish Twitter connection
 import tweepy
 
@@ -85,6 +89,17 @@ random_end_of_desc = [
     "Robot needs a rest that's enough info for now",
     "as there's a drive into deep left field by Castellanos and that'll be a home run, and so that'll make it a 4-0 ballgame"
 ]
+
+#######################################
+###  UPDATE CHARACTERISTICS TABLE   ### 
+#######################################
+# get charactistics data for companies missing industry or sector
+comp_char_update_df = idr.get_update_industry_sector()
+
+# update database for companies missing industry or sector that now have one
+su.update_industry_sector_to_sql(comp_char_update_df)
+#######################################
+
 
 # get todays date
 today = datetime.today().strftime("%Y-%m-%d")
@@ -167,3 +182,6 @@ if row_count > 0:
         api.update_with_media(filename="comp_desc.png", media_id=media.media_id, status=tweet_text)
         
         time.sleep(240)
+
+
+su.update_sql_log("stock goes live today")

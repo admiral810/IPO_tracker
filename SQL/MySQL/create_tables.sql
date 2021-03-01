@@ -110,3 +110,13 @@ ADD COLUMN symbol_date_records INT ;
 
 ALTER TABLE industry_performance
 ADD COLUMN symbol_date_records INT ;
+
+-- ==================================================================================
+-- log for scripts running
+-- ==================================================================================
+CREATE TABLE scripts_log
+(
+	id SERIAL PRIMARY KEY,
+	company VARCHAR(255) NOT NULL,
+	date_time DATETIME
+);
