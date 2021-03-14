@@ -76,12 +76,12 @@ random_upcoming_ipo = [
 
 def remove_comp_suffix(df, company='company'):
     """Removes traling company name info that takes up space."""
-    remove_text = [' /FL', '/DE', ', Inc.', ' Inc.', ', INC.', ' INC.',' PLC', ', Corp.', 'corp.', ' Corp.', ' CORP.', 
-                   ' CORP',', Ltd', ' Ltd', ' plc',  ' PLC', ' SE']
+    remove_text = [' /FL', '/DE', ', Inc.', ' Inc.', ', INC.', ' INC.',' PLC', ', Corp.', 'corp.', ' Corp.', ' CORP.', 'Ltd.', 
+                   ', Ltd', ' Ltd', ' plc', ' PLC']
     for t in remove_text:
-        df[company] = df[company].str.rstrip(t)
+        df[company] = df[company].str.replace(t, "")
     
-    return df    
+    return df      
 
 
 ######################################################
