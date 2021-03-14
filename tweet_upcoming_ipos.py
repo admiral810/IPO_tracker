@@ -155,7 +155,13 @@ else:
 
     # table for tweet image
     tw_ipos_img_df = tw_ipos_df[['price_month_day', 'symbol', 'company', 'proposed_share_price', 'market_cap']]
+    
+    # add a blank column for text overlap
+    tw_ipos_img_df[" "] = " "
+    tw_ipos_img_df = tw_ipos_img_df[['price_month_day', 'symbol', 'company', ' ', 'proposed_share_price', 'market_cap']]
+
     tw_ipos_img_df['proposed_share_price'] = "$" + tw_ipos_img_df['proposed_share_price']
+
     tw_ipos_img_df = tw_ipos_img_df.rename(columns={'price_month_day': 'Date',
                                                     'symbol': 'Symbol',
                                                     'company': 'Company',
