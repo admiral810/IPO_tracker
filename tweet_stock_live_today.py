@@ -87,7 +87,9 @@ random_end_of_desc = [
     "enough story time on them for now",
     "ugh who cares", 
     "Robot needs a rest that's enough info for now",
-    "as there's a drive into deep left field by Castellanos and that'll be a home run, and so that'll make it a 4-0 ballgame"
+    "as there's a drive into deep left field by Castellanos and that'll be a home run, and so that'll make it a 4-0 ballgame", 
+    "time's up, let's do this. LEEEEEEERRROOOOOOYYYYYYY JENKIIIIINNNNNNNSSSSSSSSSSSSS", 
+    "french vanillaaaa, rocky road... chocolate peanut-butter cookie-dough. scoop there it is. scoop there it is... lmao."
 ]
 
 #######################################
